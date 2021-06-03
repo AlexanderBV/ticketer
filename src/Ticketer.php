@@ -531,14 +531,13 @@ class Ticketer
             $this->printer->text($this->next($this->ambiente));
             
             // DETALLE DEL PEDIDO
+            $this->printer->setJustification(Printer::JUSTIFY_LEFT);
             $this->printer->setEmphasis(true);
             $this->printer->text("DESCRIPCION\n");
             $this->printer->text("CANTIDAD                   PRECIO  IMPORTE\n");
             $this->printer->text($this->line());
             $this->printer->setEmphasis(false);
             $this->printer->selectPrintMode();// text normal
-
-            $this->printer->setJustification(Printer::JUSTIFY_LEFT);
 
             foreach ($this->items as $item) {
                 $this->printer->text($item);
