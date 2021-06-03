@@ -383,9 +383,23 @@ class Ticketer
             $this->printer->setJustification(Printer::JUSTIFY_LEFT);
             $this->printer->selectPrintMode();// text normal
             $this->printer->text($this->next('FECHA: ' . $this->fecha_emision));
-            $this->printer->text($this->next('NRO.DOC: ' . $this->numero_documento));
-            $this->printer->text($this->next('CLIENTE: ' . $this->cliente));
-            $this->printer->text($this->next('DIRECCION: ' . $this->direccion));
+            
+            if ($this->numero_documento) {
+                $this->printer->text($this->next('NRO.DOC: ' . $this->numero_documento));
+            }
+
+            if ($this->cliente) {
+                $this->printer->text($this->next('CLIENTE: ' . $this->cliente));
+            }
+            
+            if ($this->direccion) {
+                $this->printer->text($this->next('DIRECCION: ' . $this->direccion));
+            }
+
+            if ($this->mozo) {
+                $this->printer->text($this->next('ATENDIDO POR: ' . $this->mozo));
+            }
+            
             $this->printer->feed();
 
             // DETALLE DEL PEDIDO
