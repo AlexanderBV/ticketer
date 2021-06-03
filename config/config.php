@@ -1,7 +1,8 @@
 <?php
 
 /*
- * You can place your custom package configuration in here.
+ * Configuración de Warrior\Ticketer\Tiketer 
+ * documentación en https://github.com/AlexanderBV/ticketer
  */
 return [
     'conexion' => [
@@ -30,4 +31,4 @@ return [
         // "SERVICIOS PRESTADOS EN LA AMAZONÍA  REGIÓN SELVA PARA SER CONSUMIDOS EN LA MISMA",
         "BIENES TRANSFERIDOS EN LA AMAZONÍA REGIÓN SELVA PARA SER CONSUMIDOS EN LA MISMA",
     ]
-];
+];  
