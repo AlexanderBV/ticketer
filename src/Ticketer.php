@@ -436,15 +436,304 @@ class Ticketer
                 $this->printer->cut();
             }
 
-            $this->printer->close();
-
-
             // Se solicita codificacion en base 64? SI: convertir data; NO: retornar true
+            // Importane pedir el data sin antes cerrar la conexion
             if ($base64) {
                 $this->data = base64_encode($this->connector->getData());
             }else{
                 $this->data = true;
             }
+
+            $this->printer->close();
+            
+            return $this->data;
+
+        } else {
+            throw new Exception('Printer no ha sido inicializado.');
+        }
+    }
+
+    public function printAvance($base64 = false, $cut = true)
+    {
+        if ($this->printer) {
+           
+            $this->printer->initialize();
+            $this->printer->setPrintLeftMargin(1);
+
+            // Si no hay datos de la tienda tomanos por defecto los de config/ticket.php 
+            if (empty($this->store)) {
+
+                $store = new Store();
+                $store->setRuc(config('ticketer.store.ruc'));
+                $store->setNombreComercial(config('ticketer.store.nombre_comercial'));
+                $store->setRazonSocial(config('ticketer.store.razon_social'));
+                $store->setDireccion(config('ticketer.store.direccion'));
+                $store->setTelefono(config('ticketer.store.telefono'));
+                $store->setEmail(config('ticketer.store.email'));
+                $store->setWebsite(config('ticketer.store.website'));
+                $store->setLogo(config('ticketer.store.logo'));
+
+                $this->setStore($store);
+
+            }
+
+            // HEADER
+            $this->printer->setJustification(Printer::JUSTIFY_CENTER);
+            $this->printer->selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
+
+            if ($this->store->getLogo()) {
+                $image = EscposImage::load($this->store->getLogo(), false);
+                $this->printer->graphics($image);//
+                
+            }else{
+                $this->printer->text($this->next($this->store->getNombreComercial()));
+            }
+
+            $this->printer->selectPrintMode();
+            $this->printer->text($this->next($this->store->getRazonSocial()));
+            $this->printer->selectPrintMode(Printer::MODE_FONT_B);
+            $this->printer->text($this->next($this->store->getDireccion()));
+            $this->printer->text($this->next('RUC:'. $this->store->getRuc()));
+
+
+            //TIPO Y NRO DE DOCUEMNTO 
+            $this->printer->selectPrintMode();// text normal
+            $this->printer->text($this->line());
+            $this->printer->setEmphasis(true);
+            $this->printer->text($this->next($this->comprobante . " ". $this->serie_comprobante . '-' . $this->numero_comprobante));
+            $this->printer->setEmphasis(false);
+            $this->printer->text($this->line());
+
+            //DATOS CLIENTE
+            $this->printer->setJustification(Printer::JUSTIFY_LEFT);
+            $this->printer->selectPrintMode();// text normal
+            $this->printer->text($this->next('FECHA: ' . $this->fecha_emision));
+            $this->printer->text($this->next('NRO.DOC: ' . $this->numero_documento));
+            $this->printer->text($this->next('CLIENTE: ' . $this->cliente));
+            $this->printer->text($this->next('DIRECCION: ' . $this->direccion));
+            $this->printer->feed();
+
+            // DETALLE DEL PEDIDO
+            $this->printer->setEmphasis(true);
+            $this->printer->text("DESCRIPCION\n");
+            $this->printer->text("CANTIDAD                   PRECIO  IMPORTE\n");
+            $this->printer->text($this->line());
+            $this->printer->setEmphasis(false);
+            $this->printer->selectPrintMode();// text normal
+
+            $this->printer->setJustification(Printer::JUSTIFY_LEFT);
+
+            if (strtoupper($this->tipo_detalle) === 'DETALLADO') {
+                foreach ($this->items as $item) {
+                    $this->printer->text($item);
+                }
+            }else if(strtoupper($this->tipo_detalle) === 'CONSUMO'){
+                $this->printer->text(str_pad('POR CONSUMO', 32) . str_pad($this->formatter_num($this->subtotal)  , 10, ' ', STR_PAD_LEFT));
+            }
+
+            $this->calcularTotales();
+
+            $this->printer->text($this->line());
+            $this->printer->text($this->next(str_pad('SUB TOTAL   S/ ', 32, ' ', STR_PAD_LEFT) . str_pad($this->formatter_num($this->subtotal) , 10, ' ', STR_PAD_LEFT)) );
+            $this->printer->text($this->next(str_pad('DESCUENTO   S/ ', 32, ' ', STR_PAD_LEFT) . str_pad($this->formatter_num($this->exonerada), 10, ' ', STR_PAD_LEFT)) );
+            $this->printer->text($this->next(str_pad('INAFECTA   S/ ' , 32, ' ', STR_PAD_LEFT) . str_pad($this->formatter_num($this->inafecta) , 10, ' ', STR_PAD_LEFT)) );
+            $this->printer->text($this->next(str_pad('IGV (18%)   S/ ', 32, ' ', STR_PAD_LEFT) . str_pad($this->formatter_num($this->igv)      , 10, ' ', STR_PAD_LEFT)) );
+            $this->printer->text($this->next(str_pad('ICBPER   S/ '   , 32, ' ', STR_PAD_LEFT) . str_pad($this->formatter_num($this->icbper)   , 10, ' ', STR_PAD_LEFT)) );
+            $this->printer->setEmphasis(true);
+            $this->printer->text($this->next(str_pad('**** TOTAL   S/ ', 32, ' ', STR_PAD_LEFT). str_pad($this->formatter_num($this->total), 10, ' ', STR_PAD_LEFT)) ); 
+            $this->printer->setEmphasis(false);
+            
+            $this->printer->text($this->line());
+            $total_formatter = (new NumToStr())->toInvoice($this->formatter_num($this->total), 2, 'SOLES');
+            $this->printer->text("SON: {$total_formatter}\n");
+            $this->printer->text($this->line());
+
+            $this->printer->text($this->next(str_pad('EFECTIVO   S/ ', 32, ' ', STR_PAD_LEFT) . str_pad($this->formatter_num($this->efectivo), 10, ' ', STR_PAD_LEFT)) );
+            $this->printer->text($this->next(str_pad('VUELTO   S/ '  , 32, ' ', STR_PAD_LEFT) . str_pad($this->formatter_num($this->vuelto)  , 10, ' ', STR_PAD_LEFT)) );
+            $this->printer->text($this->line());
+
+            $this->printer->setJustification(Printer::JUSTIFY_CENTER);
+
+            $QR = $this->store->getRuc()   . '|' 
+                . $this->codigo_comprobante . '|' 
+                . $this->serie_comprobante  . '|' 
+                . $this->numero_comprobante . '|' 
+                . $this->formatter_num($this->igv)   . '|' 
+                . $this->formatter_num($this->total) . '|' 
+                . $this->fecha_emision->format('Y-m-d') . '|'
+                . $this->codigo_documento . '|'
+                . $this->numero_documento;
+
+            $this->setCodeQr($QR);
+
+            if ($this->comprobante == 'BOLETA' || $this->comprobante == 'FACTURA') {
+                $this->printer->qrCode($this->QR, Printer::QR_ECLEVEL_L, 4);
+                $this->printer->selectPrintMode(Printer::MODE_FONT_B);
+            
+                $this->printer->text("REPRESENTACION IMPRESA DE LA $this->comprobante \n");
+                $this->printer->text("PUEDE CONSULTAR EN: ");
+                $this->printer->setEmphasis(true);//bolt
+                $this->printer->text("{$this->store->getWebsite()}\n");
+                $this->printer->setEmphasis(false);//bolt
+            }
+
+            if (config('ticketer.leyendas')) {
+                foreach (config('ticketer.leyendas') as $key => $leyenda) {
+                    $this->printer->feed();//bolt
+                    $this->printer->text($this->next($leyenda));
+                    
+                }
+            }
+
+            if ($cut) {
+                $this->printer->cut();
+            }
+
+            // Se solicita codificacion en base 64? SI: convertir data; NO: retornar true
+            // Importane pedir el data sin antes cerrar la conexion
+            if ($base64) {
+                $this->data = base64_encode($this->connector->getData());
+            }else{
+                $this->data = true;
+            }
+
+            $this->printer->close();
+            
+            return $this->data;
+
+        } else {
+            throw new Exception('Printer no ha sido inicializado.');
+        }
+    }
+
+    public function printCocina($base64 = false, $cut = true)
+    {
+        if ($this->printer) {
+           
+            $this->printer->initialize();
+            $this->printer->setPrintLeftMargin(1);
+
+            // HEADER
+            $this->printer->setJustification(Printer::JUSTIFY_CENTER);
+            $this->printer->selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
+
+            if ($this->store->getLogo()) {
+                $image = EscposImage::load($this->store->getLogo(), false);
+                $this->printer->graphics($image);//
+                
+            }else{
+                $this->printer->text($this->next($this->store->getNombreComercial()));
+            }
+
+            $this->printer->selectPrintMode();
+            $this->printer->text($this->next($this->store->getRazonSocial()));
+            $this->printer->selectPrintMode(Printer::MODE_FONT_B);
+            $this->printer->text($this->next($this->store->getDireccion()));
+            $this->printer->text($this->next('RUC:'. $this->store->getRuc()));
+
+
+            //TIPO Y NRO DE DOCUEMNTO 
+            $this->printer->selectPrintMode();// text normal
+            $this->printer->text($this->line());
+            $this->printer->setEmphasis(true);
+            $this->printer->text($this->next($this->comprobante . " ". $this->serie_comprobante . '-' . $this->numero_comprobante));
+            $this->printer->setEmphasis(false);
+            $this->printer->text($this->line());
+
+            //DATOS CLIENTE
+            $this->printer->setJustification(Printer::JUSTIFY_LEFT);
+            $this->printer->selectPrintMode();// text normal
+            $this->printer->text($this->next('FECHA: ' . $this->fecha_emision));
+            $this->printer->text($this->next('NRO.DOC: ' . $this->numero_documento));
+            $this->printer->text($this->next('CLIENTE: ' . $this->cliente));
+            $this->printer->text($this->next('DIRECCION: ' . $this->direccion));
+            $this->printer->feed();
+
+            // DETALLE DEL PEDIDO
+            $this->printer->setEmphasis(true);
+            $this->printer->text("DESCRIPCION\n");
+            $this->printer->text("CANTIDAD                   PRECIO  IMPORTE\n");
+            $this->printer->text($this->line());
+            $this->printer->setEmphasis(false);
+            $this->printer->selectPrintMode();// text normal
+
+            $this->printer->setJustification(Printer::JUSTIFY_LEFT);
+
+            if (strtoupper($this->tipo_detalle) === 'DETALLADO') {
+                foreach ($this->items as $item) {
+                    $this->printer->text($item);
+                }
+            }else if(strtoupper($this->tipo_detalle) === 'CONSUMO'){
+                $this->printer->text(str_pad('POR CONSUMO', 32) . str_pad($this->formatter_num($this->subtotal)  , 10, ' ', STR_PAD_LEFT));
+            }
+
+            $this->calcularTotales();
+
+            $this->printer->text($this->line());
+            $this->printer->text($this->next(str_pad('SUB TOTAL   S/ ', 32, ' ', STR_PAD_LEFT) . str_pad($this->formatter_num($this->subtotal) , 10, ' ', STR_PAD_LEFT)) );
+            $this->printer->text($this->next(str_pad('DESCUENTO   S/ ', 32, ' ', STR_PAD_LEFT) . str_pad($this->formatter_num($this->exonerada), 10, ' ', STR_PAD_LEFT)) );
+            $this->printer->text($this->next(str_pad('INAFECTA   S/ ' , 32, ' ', STR_PAD_LEFT) . str_pad($this->formatter_num($this->inafecta) , 10, ' ', STR_PAD_LEFT)) );
+            $this->printer->text($this->next(str_pad('IGV (18%)   S/ ', 32, ' ', STR_PAD_LEFT) . str_pad($this->formatter_num($this->igv)      , 10, ' ', STR_PAD_LEFT)) );
+            $this->printer->text($this->next(str_pad('ICBPER   S/ '   , 32, ' ', STR_PAD_LEFT) . str_pad($this->formatter_num($this->icbper)   , 10, ' ', STR_PAD_LEFT)) );
+            $this->printer->setEmphasis(true);
+            $this->printer->text($this->next(str_pad('**** TOTAL   S/ ', 32, ' ', STR_PAD_LEFT). str_pad($this->formatter_num($this->total), 10, ' ', STR_PAD_LEFT)) ); 
+            $this->printer->setEmphasis(false);
+            
+            $this->printer->text($this->line());
+            $total_formatter = (new NumToStr())->toInvoice($this->formatter_num($this->total), 2, 'SOLES');
+            $this->printer->text("SON: {$total_formatter}\n");
+            $this->printer->text($this->line());
+
+            $this->printer->text($this->next(str_pad('EFECTIVO   S/ ', 32, ' ', STR_PAD_LEFT) . str_pad($this->formatter_num($this->efectivo), 10, ' ', STR_PAD_LEFT)) );
+            $this->printer->text($this->next(str_pad('VUELTO   S/ '  , 32, ' ', STR_PAD_LEFT) . str_pad($this->formatter_num($this->vuelto)  , 10, ' ', STR_PAD_LEFT)) );
+            $this->printer->text($this->line());
+
+            $this->printer->setJustification(Printer::JUSTIFY_CENTER);
+
+            $QR = $this->store->getRuc()   . '|' 
+                . $this->codigo_comprobante . '|' 
+                . $this->serie_comprobante  . '|' 
+                . $this->numero_comprobante . '|' 
+                . $this->formatter_num($this->igv)   . '|' 
+                . $this->formatter_num($this->total) . '|' 
+                . $this->fecha_emision->format('Y-m-d') . '|'
+                . $this->codigo_documento . '|'
+                . $this->numero_documento;
+
+            $this->setCodeQr($QR);
+
+            if ($this->comprobante == 'BOLETA' || $this->comprobante == 'FACTURA') {
+                $this->printer->qrCode($this->QR, Printer::QR_ECLEVEL_L, 4);
+                $this->printer->selectPrintMode(Printer::MODE_FONT_B);
+            
+                $this->printer->text("REPRESENTACION IMPRESA DE LA $this->comprobante \n");
+                $this->printer->text("PUEDE CONSULTAR EN: ");
+                $this->printer->setEmphasis(true);//bolt
+                $this->printer->text("{$this->store->getWebsite()}\n");
+                $this->printer->setEmphasis(false);//bolt
+            }
+
+            if (config('ticketer.leyendas')) {
+                foreach (config('ticketer.leyendas') as $key => $leyenda) {
+                    $this->printer->feed();//bolt
+                    $this->printer->text($this->next($leyenda));
+                    
+                }
+            }
+
+            if ($cut) {
+                $this->printer->cut();
+            }
+
+            // Se solicita codificacion en base 64? SI: convertir data; NO: retornar true
+            // Importane pedir el data sin antes cerrar la conexion
+            if ($base64) {
+                $this->data = base64_encode($this->connector->getData());
+            }else{
+                $this->data = true;
+            }
+
+            $this->printer->close();
             
             return $this->data;
 
