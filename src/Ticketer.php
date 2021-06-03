@@ -68,8 +68,8 @@ class Ticketer
     private $icbper    = 0;
     private $total     = 0;
 
-    private $efectivo;
-    private $vuelto;
+    private $efectivo = 0;
+    private $vuelto = 0;
 
     private $QR;
 
@@ -228,6 +228,14 @@ class Ticketer
     public function setTipoDetalle($tipo_detalle)
     {
         $this->tipo_detalle = $tipo_detalle;
+    }
+
+    /**
+     * @param double|int $efectivo Monto con la que el Cliente ha pagado
+     */
+    public function setEfectivo($efectivo)
+    {
+       $this->efectivo = $efectivo;
     }
 
     /**
