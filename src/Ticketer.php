@@ -554,11 +554,10 @@ class Ticketer
             $this->printer->text($this->line());
 
             if ($this->mozo) {
-                $this->printer->text($this->next($this->mozo));
+                $this->printer->text('ATENDIDO POR: '. $this->next($this->mozo));
                 $this->printer->text($this->line());
             }
 
-            $this->printer->text("DNI/RUC:\n");
             $this->printer->text("DNI/RUC:\n");
             $this->printer->text("NOMBRES/RAZON SOCIAL:\n\n");
             $this->printer->text("DIRECCION:\n\n");
@@ -606,11 +605,11 @@ class Ticketer
 
             $this->printer->text($this->next($this->cliente));
 
-            $this->printer->text("[CANT] DESCRIPCION\n");
+            // $this->printer->text("[CANT] DESCRIPCION\n");
             $this->printer->text($this->line());
 
             foreach ($this->items as $item) {
-                $this->printer->text($item);
+                $this->printer->text($this->next($item));
             }
 
             $this->printer->setTextSize(1, 1);
