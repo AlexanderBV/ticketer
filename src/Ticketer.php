@@ -555,7 +555,6 @@ class Ticketer
 
             if ($this->mozo) {
                 $this->printer->text('ATENDIDO POR: '. $this->next($this->mozo));
-                $this->printer->text($this->line());
             }
 
             $this->printer->text("DNI/RUC:\n");
