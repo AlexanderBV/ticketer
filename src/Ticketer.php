@@ -626,7 +626,7 @@ class Ticketer
             $this->printer->text($this->next($this->cliente));
 
             // $this->printer->text("[CANT] DESCRIPCION\n");
-            $this->printer->text($this->line());
+            $this->printer->text("----------------------------\n");
 
             foreach ($this->items as $item) {
                 $this->printer->text($this->next($item));
