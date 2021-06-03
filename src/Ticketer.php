@@ -274,7 +274,7 @@ class Ticketer
         $this->icbper = 0;
         $this->total = 0;
 
-        $this->monto_icbper = ($this->monto_icbper == 0) ? $this->montoIcbper() : $this->monto_icbper;
+        $this->monto_icbper = ($this->monto_icbper == 0) ? $this->year_icbper() : $this->monto_icbper;
 
         foreach ($this->items as $item) {
 
@@ -378,9 +378,6 @@ class Ticketer
                 $this->printer->text(str_pad('POR CONSUMO', 32) . str_pad($this->formatter_num($this->subtotal)  , 10, ' ', STR_PAD_LEFT));
             }
 
-            // DAR EL MONTO ICBPER SEGUN EL AÑO
-            // $this->setMontoIcbper(ValuesHelp::icbper());
-
             $this->calcularTotales();
 
             $this->printer->text($this->line());
@@ -461,7 +458,7 @@ class Ticketer
      * @param string|int $year Año del inpuesto
      * @return double 
      */
-    public static function montoIcbper($year = null)
+    public static function year_icbper($year = null)
     {
         $year = ($year) ? $year : date("Y");
 
@@ -472,23 +469,35 @@ class Ticketer
             case 2023: return 0.5; break;
             case 2024: return 0.6; break;
             case 2025: return 0.7; break;
+            case 2026: return 0.8; break;
+            case 2027: return 0.9; break;
+            case 2028: return 1.0; break;
             default:   return 0.3; break;
         }
     }
 
-    
-
-    public function formatter_num($num)
+    /**
+     * @var double|int $numero
+     * @return string Número de dos dígitos autocompletado 2 decimales
+     */
+    public static function formatter_num($numero)
     {
-        return number_format($num, 2, '.', '');
+        return number_format($numero, 2, '.', '');
     }
 
-    public function next($text)
+    /**
+     * @var string $texto
+     * @return string Texto concatenado a salto de linea
+     */
+    public static function next($texto)
     {
-        return "{$text}\n";
+        return "{$texto}\n";
     }
 
-    public function line()
+    /**
+     * @return string Linea de guiones
+     */
+    public static function line()
     {
         return "------------------------------------------\n";
     }
