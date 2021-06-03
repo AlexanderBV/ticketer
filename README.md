@@ -4,7 +4,7 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/warrior/ticketer.svg?style=flat-square)](https://packagist.org/packages/warrior/ticketer)
 ![GitHub Actions](https://github.com/AlexanderBV/ticketer/actions/workflows/php.yml/badge.svg)
 
-Paquete Laravel simple para integrar ESC/POS Print Driver para PHP y dar estructura de comprobantes segun [Normativa Sunat](https://www.sunat.gob.pe/legislacion/superin/2019/206-2019.pdf). 
+Paquete Laravel simple para integrar ESC/POS Print Driver para PHP y dar estructura de comprobantes segun [Normativa Sunat](https://www.sunat.gob.pe/legislacion/superin/2019/206-2019.pdf).
 - Comprobantes: Boleta y Factura
 - Tickets: Cocina, Avance de cuenta *(proximamete)*.
 
@@ -65,7 +65,7 @@ Edite el archivo de configuración ubicado en `config / ticketer.php` de la sigu
   - `BIENES TRANSFERIDOS EN LA AMAZONÍA REGIÓN SELVA PARA SER CONSUMIDOS EN LA MISMA`.
   - Cualquier otra leyenda que se requiera.
 
-## Example (Print Receipt)
+## Ejempo de Imprimir comporbante
 
 ```php
 use Warrior\Ticketer\Ticketer;
@@ -95,7 +95,11 @@ $ticketer->addItem("POLLO A LA BRASA", 2, 21.5, false, false);
 // $ticketer->addItem("AGUA MINERAL", 1, 2 , false, true);
 // $ticketer->addItem("BOLSA PLASTICA", 1, 0.2 , true, false);
 
+// Retornara true al mandar la impresión
 $ticketer->printComprobante();
+// Si quiere obtener los datos de impresion en base64
+// util para trabajar con APIS web
+// return $ticketer->printComprobante(true);
 ```
 
 ## Changelog
