@@ -1,0 +1,60 @@
+{
+    "name": "warrior/ticketer",
+    "description": "Imprimir boletas y facturas con ESCPOS",
+    "keywords": [
+        "warrior",
+        "ticketer"
+    ],
+    "homepage": "https://github.com/warrior/ticketer",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Alexander BV",
+            "email": "edwinbautista@upeu.edu.pe",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php" : "^7.2.5|^8.0",
+        "illuminate/support": "^7.0|^8.0",
+        "illuminate/container": "^7.0|^8.0",
+        "illuminate/contracts": "^7.0|^8.0",
+        "illuminate/database": "^7.0|^8.0",
+        "mike42/escpos-php": "^3.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^6.0",
+        "phpunit/phpunit": "^9.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Warrior\\Ticketer\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Warrior\\Ticketer\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Warrior\\Ticketer\\TicketerServiceProvider"
+            ],
+            "aliases": {
+                "Ticketer": "Warrior\\Ticketer\\TicketerFacade"
+            }
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
