@@ -18,7 +18,7 @@ use Mike42\Escpos\Printer;
 
 class Ticketer
 {
-     /**
+    /**
      * @var Printer ESC/POS 
      */
     private $printer;
