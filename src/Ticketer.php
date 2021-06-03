@@ -96,11 +96,11 @@ class Ticketer
         $connector_descriptor = ($connector_descriptor) ? $connector_descriptor :config('ticketer.conexion.connector_descriptor');
 
         switch (strtolower($connector_type)) {
-            case 'cups':
-                $this->connector = new CupsPrintConnector($connector_descriptor);
-                break;
             case 'windows':
                 $this->connector = new WindowsPrintConnector($connector_descriptor);
+                break;
+            case 'cups':
+                $this->connector = new CupsPrintConnector($connector_descriptor);
                 break;
             case 'network':
                 $this->connector = new NetworkPrintConnector($connector_descriptor);
