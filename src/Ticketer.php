@@ -18,8 +18,6 @@ use Mike42\Escpos\Printer;
 
 class Ticketer
 {
-    // Build your next great package.
-
      /**
      * @var Printer ESC/POS 
      */
