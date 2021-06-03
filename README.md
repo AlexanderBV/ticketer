@@ -1,8 +1,8 @@
-# Very short description of the package
+# Imprimir comprobantes en impresora termica
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/warrior/ticketer.svg?style=flat-square)](https://packagist.org/packages/warrior/ticketer)
 [![Total Downloads](https://img.shields.io/packagist/dt/warrior/ticketer.svg?style=flat-square)](https://packagist.org/packages/warrior/ticketer)
-![GitHub Actions](https://github.com/warrior/ticketer/actions/workflows/main.yml/badge.svg)
+![GitHub Actions](https://github.com/AlexanderBV/ticketer/actions/workflows/php.yml/badge.svg)
 
 This is where your description should go. Try and limit it to a paragraph or two, and maybe throw in a mention of what PSRs you support to avoid any confusion with users and contributors.
 
