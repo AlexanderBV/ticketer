@@ -65,7 +65,7 @@ Edite el archivo de configuración ubicado en `config / ticketer.php` de la sigu
   - `BIENES TRANSFERIDOS EN LA AMAZONÍA REGIÓN SELVA PARA SER CONSUMIDOS EN LA MISMA`.
   - Cualquier otra leyenda que se requiera.
 
-## Ejempo de Imprimir comporbante
+## Ejemplo de Imprimir comporbante
 
 ```php
 use Warrior\Ticketer\Ticketer;
@@ -100,6 +100,66 @@ $ticketer->printComprobante();
 // Si quiere obtener los datos de impresion en base64
 // util para trabajar con APIS web
 // return $ticketer->printComprobante(true);
+```
+
+## Ejemplo de Imprimir avance de cuenta
+
+```php
+use Warrior\Ticketer\Ticketer;
+...
+```
+
+```php
+$now = Carbon::now();
+$ticketer = new Ticketer();
+$ticketer->init('windows', 'EPSON TM-T88V Receipt');
+$ticketer->setFechaEmision($now);
+$ticketer->setCliente('Edwin Alexander Bautista Villegas');
+$ticketer->setAmbiente('MESA 01 - SALON PRINCIPAL');
+
+$ticketer->addItem("POLLO A LA BRASA", 2, 21.5, false, false);
+$ticketer->addItem("ENSALADA RUSA", 3, 12, false, false);
+$ticketer->setMozo('Junito Bardales');
+
+// Retornara true al mandar la impresión
+$ticketer->printAvance();
+// Si quiere obtener los datos de impresion en base64
+// util para trabajar con APIS web
+// return $ticketer->printAvance(true);
+```
+
+## Ejemplo de Imprimir ticket de cocina
+
+```php
+use Warrior\Ticketer\Ticketer;
+...
+```
+
+```php
+$now = Carbon::now();
+$ticketer = new Ticketer();
+$ticketer->init('windows', 'EPSON TM-T88V Receipt');
+$ticketer->setFechaEmision($now);
+$ticketer->setCliente('Edwin Alexander Bautista Villegas');
+$ticketer->setAmbiente('MESA 01 - SALON PRINCIPAL');
+
+/** 
+ * Agregar un false adicional para no imprimir en formato comprobante
+ * El precio, el icbper, transferencia gratuita seran obiados ya que no son necesarios en la cocina 
+ * Ejemplo:
+ * [1] - Pollo a la brasa
+ * [2] - Coca Cola
+*/
+
+$ticketer->addItem("POLLO A LA BRASA", 2, 21.5, false, false, false);
+$ticketer->addItem("ENSALADA RUSA", 3, 12, false, false, false);
+$ticketer->setMozo('Junito Bardales');
+
+// Retornara true al mandar la impresión
+$ticketer->printCocina();
+// Si quiere obtener los datos de impresion en base64
+// util para trabajar con APIS web
+// return $ticketer->printCocina(true);
 ```
 
 ## Changelog
