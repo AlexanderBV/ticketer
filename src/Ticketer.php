@@ -44,19 +44,21 @@ class Ticketer
     private $fecha_emision;
 
     private $comprobante;
+    private $tipo_comprobante;
     private $serie_comprobante;
     private $numero_comprobante;
-    private $codigo_comprobante;
 
     private $cliente;
     private $tipo_documento;
     private $numero_documento;
-    private $codigo_documento;
     private $direccion;
 
     private $tipo_detalle;
 
+    
     private $items;
+    
+    private $transferencia_total_gratuita = false;
 
     private $monto_icbper = 0;
 
@@ -72,6 +74,9 @@ class Ticketer
     private $vuelto = 0;
 
     private $QR;
+
+    /** IMPRIMIR SECCIONES */
+    private $seccion_qr = true;
 
     /** PARA MESA  **/
 
@@ -171,9 +176,9 @@ class Ticketer
         $this->numero_comprobante = $numero_comprobante;
     }
 
-    public function seCodigoComprobante($codigo_comprobante)
+    public function setTipoComprobante($tipo_comprobante)
     {
-        $this->codigo_comprobante = $codigo_comprobante;
+        $this->tipo_comprobante = $tipo_comprobante;
     }
 
     /**
@@ -201,15 +206,6 @@ class Ticketer
     public function setNumeroDocumento($numero_documento)
     {
         $this->numero_documento = $numero_documento;
-    }
-
-    /**
-     * @param string $codigo_documento Código del documento,
-     * @example 00, 01, 06. Para: Nulo, DNI, RUC
-     */
-    public function setCodigoDocumento($codigo_documento)
-    {
-        $this->codigo_documento = $codigo_documento;
     }
 
     /**
@@ -254,6 +250,14 @@ class Ticketer
         }else{
             $this->items[] =  $this->next("[{$cantidad}] {$nombre}");
         }
+    }
+
+    /**
+     * @param boolean $transferencia_total_gratuita Si toda la venta es una transferencia gratuita
+     */
+    public function setTransferenciaTotalGratuita($transferencia_total_gratuita)
+    {
+        $this->transferencia_total_gratuita = $transferencia_total_gratuita;
     }
 
     public function setMontoIcbper($monto_icbper)
@@ -320,6 +324,11 @@ class Ticketer
 
         $this->total = ($this->subtotal - $this->descuento) + $this->exonerada + $this->inafecta + $this->igv + $this->icbper;
         $this->vuelto = $this->efectivo - $this->total;
+    }
+
+    public function setSeccionQr($seccion_qr)
+    {
+        $this->seccion_qr = $seccion_qr;
     }
 
     /**
@@ -443,27 +452,33 @@ class Ticketer
 
             $this->printer->setJustification(Printer::JUSTIFY_CENTER);
 
-            $QR = $this->store->getRuc()   . '|' 
-                . $this->codigo_comprobante . '|' 
+            if ($this->seccion_qr) {
+                $QR = $this->store->getRuc()   . '|' 
+                . $this->tipo_comprobante . '|' 
                 . $this->serie_comprobante  . '|' 
                 . $this->numero_comprobante . '|' 
                 . $this->formatter_num($this->igv)   . '|' 
                 . $this->formatter_num($this->total) . '|' 
                 . $this->fecha_emision->format('Y-m-d') . '|'
-                . $this->codigo_documento . '|'
+                . $this->tipo_documento . '|'
                 . $this->numero_documento;
 
-            $this->setCodeQr($QR);
+                $this->setCodeQr($QR);
 
-            if ($this->comprobante == 'BOLETA' || $this->comprobante == 'FACTURA') {
                 $this->printer->qrCode($this->QR, Printer::QR_ECLEVEL_L, 4);
-                $this->printer->selectPrintMode(Printer::MODE_FONT_B);
+            }
             
-                $this->printer->text("REPRESENTACION IMPRESA DE LA $this->comprobante \n");
-                $this->printer->text("PUEDE CONSULTAR EN: ");
-                $this->printer->setEmphasis(true);//bolt
-                $this->printer->text("{$this->store->getWebsite()}\n");
-                $this->printer->setEmphasis(false);//bolt
+            $this->printer->selectPrintMode(Printer::MODE_FONT_B);
+        
+            $this->printer->text("REPRESENTACIÓN IMPRESA DE LA $this->comprobante \n");
+            $this->printer->text("PUEDE CONSULTAR EN: ");
+            $this->printer->setEmphasis(true);//bolt
+            $this->printer->text("{$this->store->getWebsite()}\n");
+            $this->printer->setEmphasis(false);//bolt
+
+            if ($this->transferencia_total_gratuita) {
+                $this->printer->feed();//bolt
+                $this->printer->text($this->next(config('ticketer.leyenda_transferencia_total_gratuita')));
             }
 
             if (config('ticketer.leyendas')) {
